@@ -1,0 +1,10 @@
+name: samorndeploy
+services:
+  web:
+    project: .
+    language: python
+    host: appservice
+    hooks:
+      prepackage:
+        shell: sh
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
