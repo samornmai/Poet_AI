@@ -91,10 +91,10 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    port_number = int(os.getenv("PORT", "8502"))
+    port_number = int(os.getenv("PORT", "8000"))
     ft.run(
         main,
         view=ft.AppView.WEB_BROWSER,
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=port_number,
     )
