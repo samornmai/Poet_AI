@@ -12,6 +12,7 @@ from AIScreen.ai_story_generator import build_story_ai_results_view
 from Assistant import build_chat_assistant_view
 from sidebar import build_sidebar
 from home import build_home_page_view
+from responsive import ResponsiveConfig
 
 load_dotenv()
 
@@ -20,9 +21,14 @@ def main(page: ft.Page):
     page.title = "Poet AI Studio"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 0
+    page.window_min_width = 320  # Minimum mobile width
+    page.window_min_height = 600
 
     workspace_content_area = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
     sidebar_layout = build_sidebar(lambda v: switch_workspace_view(v), "Dashboard")
+    
+    # Store responsive state
+    responsive_state = {"config": ResponsiveConfig(page.width)}
 
     def switch_workspace_view(view_name: str):
         view_name = view_name.strip()
@@ -37,7 +43,8 @@ def main(page: ft.Page):
             "Chat Assistant",
         }
 
-        sidebar_layout.visible = view_name in sidebar_views
+        # Show sidebar only for workspace views and on non-mobile
+        sidebar_layout.visible = (view_name in sidebar_views) and not responsive_state["config"].is_mobile
 
         try:
             views = {
@@ -67,22 +74,32 @@ def main(page: ft.Page):
             )
 
         page.update()
+    
+    # Handle responsive resize
+    def on_window_event(e):
+        if e.data == "resize":
+            responsive_state["config"] = ResponsiveConfig(page.width)
+            # Update sidebar visibility on resize
+            switch_workspace_view("Dashboard")
+    
+    page.on_window_event = on_window_event
 
     switch_workspace_view("Home")
-
-    page.add(
-        ft.Row(
-            controls=[
-                sidebar_layout,
-                ft.Container(
-                    content=workspace_content_area,
-                    padding=40,
-                    expand=True,
-                ),
-            ],
-            expand=True,
-        )
+    
+    # Create responsive main layout
+    main_layout = ft.Row(
+        controls=[
+            sidebar_layout,
+            ft.Container(
+                content=workspace_content_area,
+                padding=responsive_state["config"].main_padding,
+                expand=True,
+            ),
+        ],
+        expand=True,
     )
+    
+    page.add(main_layout)
 
 
 if __name__ == "__main__":

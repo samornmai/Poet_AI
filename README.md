@@ -8,6 +8,9 @@ Poet AI Studio is a friendly desktop app for creating songs, stories, and AI-ass
 - Build story ideas and narrative drafts with a story-focused AI assistant
 - Save favorite ideas locally for later review
 - Enjoy a lighter, more animated experience with a modern, user-friendly UI
+## 🛠️ URL in hosting
+
+https://poet-ai-studio-a6c3g2dvd3g3fshd.canadacentral-01.azurewebsites.net/
 
 ## 🛠️ Tech stack
 
@@ -37,7 +40,7 @@ Poet AI Studio is a friendly desktop app for creating songs, stories, and AI-ass
 
 4. Add your Gemini API key
    ```bash
-   copy .env.example .env
+   copy .env
    ```
    Then edit the file and add your key:
    ```env

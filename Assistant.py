@@ -26,24 +26,29 @@ def get_session():
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("Missing GEMINI_API_KEY")
+        print("❌ Missing GEMINI_API_KEY in .env file")
         return False
 
     try:
+        # Initialize Gemini API with direct client creation (consistent with other modules)
         session["client"] = genai.Client(api_key=api_key)
 
         session["chat"] = session["client"].chats.create(
             model="gemini-2.5-flash",
             config={
-                "system_instruction": "You are a helpful AI assistant."
+                "system_instruction": "You are a helpful AI assistant for creative writing. Help users with songwriting, storytelling, and creative ideas."
             },
         )
 
+        print("✅ Gemini API session initialized successfully")
         return True
 
     except Exception as e:
-        print("Session error:", e)
+        print(f"❌ Session error: {str(e)}")
+        print(f"API Key loaded: {bool(api_key)}")
+        print(f"API Key format: {api_key[:20] if api_key else 'None'}...")
         return False
+
 
 
 # ---------------- SAVE FUNCTION ----------------

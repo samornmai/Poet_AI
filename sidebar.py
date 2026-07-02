@@ -1,7 +1,11 @@
 import flet as ft
+from responsive import ResponsiveConfig
 
-def build_sidebar(switch_workspace_view, current_active_label="Dashboard", current_user_role="User"):
+def build_sidebar(switch_workspace_view, current_active_label="Dashboard", current_user_role="User", page_width=1200):
     DARK_CYAN = "#0D6E6E"
+    
+    # Get responsive config
+    config = ResponsiveConfig(page_width)
     
     # Text container component holding your navigation links row reference array
     menu_items = ft.Column(spacing=4)
@@ -84,7 +88,7 @@ def build_sidebar(switch_workspace_view, current_active_label="Dashboard", curre
             ft.Column([
                 ft.Text("Poet AI", color="white", size=18, weight=ft.FontWeight.BOLD),
                 ft.Text("Studio Suite v2.5", color="white54", size=10, weight=ft.FontWeight.W_400)
-            ], spacing=1)
+            ], spacing=1, expand=True)
         ], spacing=10),
         padding=ft.padding.Padding(left=0, top=0, right=0, bottom=20),
         border=ft.Border(bottom=ft.BorderSide(1, "rgba(255,255,255,0.08)"))
@@ -130,7 +134,7 @@ def build_sidebar(switch_workspace_view, current_active_label="Dashboard", curre
             ft.Container(content=menu_items, expand=True), 
             sidebar_footer
         ]),
-        width=260, 
+        width=config.sidebar_width if config.sidebar_width > 0 else 260, 
         bgcolor=DARK_CYAN, 
         padding=20,
     )

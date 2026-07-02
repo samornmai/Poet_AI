@@ -1,11 +1,13 @@
 import flet as ft
 from database import fetch_saved_stories, delete_story_from_db
 from session_store import SESSION
+from responsive import ResponsiveConfig
 
 # --- DASHBOARD VIEW ---
 def build_dashboard_view(nav_callback):
 
     user_id = SESSION.get("user_id")
+    config = ResponsiveConfig(1200)  # Default, adapts with responsive system
 
     # 3. Simplify the access rule
     # If a user_id exists, we are authenticated, so fetch ONLY their data
@@ -15,7 +17,7 @@ def build_dashboard_view(nav_callback):
         # GUEST mode: you can choose to show nothing or all stories
         saved_items = []
 
-    saved_cards_row = ft.Row(wrap=True, spacing=20)
+    saved_cards_row = ft.Row(wrap=True, spacing=config.spacing_large)
 
     # ---------------- CARD ----------------
     def create_card(sid, title, genre, content, timestamp):
@@ -26,16 +28,19 @@ def build_dashboard_view(nav_callback):
 
         # -------- VIEW DETAIL --------
         def open_detail_dialog(e):
+            dialog_width = 560 if not config.is_mobile else 320
+            dialog_height = 320 if not config.is_mobile else 400
+            
             detail_dlg = ft.AlertDialog(
                 modal=True,
-                title=ft.Text(f"📖 {title}", weight=ft.FontWeight.BOLD),
+                title=ft.Text(f"📖 {title}", weight=ft.FontWeight.BOLD, size=config.subheading_size),
                 content=ft.Container(
                     content=ft.Column(
                         [
                             ft.Container(
                                 content=ft.Text(
                                     f"Genre: {genre}",
-                                    size=12,
+                                    size=config.body_text_size,
                                     color="#0D6E6E",
                                     weight=ft.FontWeight.W_600,
                                 ),
@@ -46,19 +51,19 @@ def build_dashboard_view(nav_callback):
                             ft.Container(
                                 content=ft.Text(
                                     content or "No content available.",
-                                    size=13,
+                                    size=config.body_text_size,
                                     color="#334155",
                                     selectable=True,
                                 ),
-                                width=520,
-                                height=320,
+                                width=dialog_width - 40,
+                                height=dialog_height,
                                 padding=0,
                             ),
                         ],
-                        spacing=12,
+                        spacing=config.spacing_medium,
                         scroll=ft.ScrollMode.AUTO,
                     ),
-                    width=560,
+                    width=dialog_width,
                     padding=0,
                 ),
                 actions=[
@@ -76,13 +81,13 @@ def build_dashboard_view(nav_callback):
             detail_dlg.open = True
             e.page.update()
 
-        # -------- CARD UI (UNCHANGED STYLE) --------
+        # -------- CARD UI (RESPONSIVE STYLE) --------
         card = ft.Container(
             bgcolor="white",
-            padding=16,
+            padding=config.card_padding,
             border_radius=12,
-            width=280,
-            height=220,
+            width=config.card_width,
+            height=220 if not config.is_mobile else None,
             content=ft.Column(
                 [
                     # HEADER
@@ -163,7 +168,7 @@ def build_dashboard_view(nav_callback):
                                 ),
                                 ft.Text(
                                     preview_snippet,
-                                    size=12,
+                                    size=config.body_text_size,
                                     color="#64748B",
                                 ),
                             ]
@@ -174,6 +179,8 @@ def build_dashboard_view(nav_callback):
                     ft.ElevatedButton(
                         "Open in Chat",
                         icon=ft.Icons.CHAT_BUBBLE_OUTLINE,
+                        width=config.button_width,
+                        height=config.button_height,
                         on_click=lambda e: (
                             nav_callback("Song Generate")
                             if genre.lower() == "song"
@@ -199,7 +206,7 @@ def build_dashboard_view(nav_callback):
         saved_cards_row.controls.append(
             ft.Text(
                 "No saved items found. Start creating to populate your workspace!",
-                size=13,
+                size=config.body_text_size,
                 color="#94A3B8",
                 italic=True,
             )
@@ -216,91 +223,99 @@ def build_dashboard_view(nav_callback):
                 )
             )
 
-    # ---------------- MAIN UI (UNCHANGED STYLE) ----------------
+    # ----------- QUICK ACTION BUTTONS ---------
+    quick_action_buttons = ft.Row(
+        [
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Icon(ft.Icons.MUSIC_NOTE, color="#0D6E6E", size=28),
+                        ft.Text("Generate a Song", size=config.subheading_size, weight="bold"),
+                        ft.TextButton(
+                            "Launch Prompt",
+                            on_click=lambda e: nav_callback("Song Generate"),
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                padding=config.card_padding,
+                bgcolor="white",
+                border_radius=12,
+                width=config.card_width,
+                border=ft.Border.all(1, "#E2E8F0"),
+            ),
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Icon(ft.Icons.AUTO_STORIES, color="#0D6E6E", size=28),
+                        ft.Text("Generate a Story", size=config.subheading_size, weight="bold"),
+                        ft.TextButton(
+                            "Launch Prompt",
+                            on_click=lambda e: nav_callback("Generate Story"),
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                padding=config.card_padding,
+                bgcolor="white",
+                border_radius=12,
+                width=config.card_width,
+                border=ft.Border.all(1, "#E2E8F0"),
+            ),
+            ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Icon(ft.Icons.CHAT_BUBBLE, color="#0D6E6E", size=28),
+                        ft.Text("Chat Assistant", size=config.subheading_size, weight="bold"),
+                        ft.TextButton(
+                            "Launch Engine",
+                            on_click=lambda e: nav_callback("Chat Assistant"),
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                padding=config.card_padding,
+                bgcolor="white",
+                border_radius=12,
+                width=config.card_width,
+                border=ft.Border.all(1, "#E2E8F0"),
+            ),
+        ],
+        wrap=True,
+        spacing=config.spacing_large,
+    )
+
+    # -------- MAIN UI (RESPONSIVE) --------
     return ft.ListView(
         [
             ft.Container(
-                padding=20,
+                padding=config.main_padding,
                 content=ft.Column(
                     [
                         ft.Text(
                             "Welcome back, Creator",
-                            size=28,
+                            size=config.heading_size,
                             weight="bold",
                             color="#1E293B",
                         ),
                         ft.Text(
                             "Generate or continue your creative AI workflow.",
-                            size=14,
+                            size=config.body_text_size,
                             color="#64748B",
                         ),
 
                         ft.Divider(height=15, color="transparent"),
-
-                        ft.Row(
-                            [
-                                ft.Container(
-                                    content=ft.Column(
-                                        [
-                                            ft.Icon(ft.Icons.MUSIC_NOTE, color="#0D6E6E", size=28),
-                                            ft.Text("Generate a Song", size=16, weight="bold"),
-                                            ft.TextButton(
-                                                "Launch Prompt",
-                                                on_click=lambda e: nav_callback("Song Generate"),
-                                            ),
-                                        ]
-                                    ),
-                                    bgcolor="white",
-                                    padding=20,
-                                    border_radius=12,
-                                    width=280,
-                                    height=140,
-                                ),
-
-                                ft.Container(
-                                    content=ft.Column(
-                                        [
-                                            ft.Icon(ft.Icons.BOOK, color="#0D6E6E", size=28),
-                                            ft.Text("Write a Story", size=16, weight="bold"),
-                                            ft.TextButton(
-                                                "Launch Engine",
-                                                on_click=lambda e: nav_callback("Generate Story"),
-                                            ),
-                                        ]
-                                    ),
-                                    bgcolor="white",
-                                    padding=20,
-                                    border_radius=12,
-                                    width=280,
-                                    height=140,
-                                ),
-
-                                ft.Container(
-                                    content=ft.Column(
-                                        [
-                                            ft.Icon(ft.Icons.CHAT_BUBBLE, color="#0D6E6E", size=28),
-                                            ft.Text("Chat Assistant", size=16, weight="bold"),
-                                            ft.TextButton(
-                                                "Launch Engine",
-                                                on_click=lambda e: nav_callback("Chat Assistant"),
-                                            ),
-                                        ]
-                                    ),
-                                    bgcolor="white",
-                                    padding=20,
-                                    border_radius=12,
-                                    width=280,
-                                    height=140,
-                                ),
-                            ],
-                            spacing=20,
-                        ),
+                        
+                        quick_action_buttons,
 
                         ft.Divider(height=25, color="transparent"),
 
                         ft.Text(
                             "Your Saved Project Artifacts Workspace",
-                            size=18,
+                            size=config.subheading_size,
                             weight="bold",
                             color="#1E293B",
                         ),
