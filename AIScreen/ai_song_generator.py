@@ -1,7 +1,6 @@
 import os
 import flet as ft
-from google import genai
-
+import google.genai as genai
 from Screen.song_generator import song_parameters
 from database import save_story_to_db, delete_story_from_db
 from session_store import SESSION

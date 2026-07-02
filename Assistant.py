@@ -1,5 +1,5 @@
 import flet as ft
-from google import genai
+import google.genai as genai
 import os
 from database import save_story_to_db
 

@@ -1,10 +1,8 @@
 import os
-
 import flet as ft
 from dotenv import load_dotenv
 
 from database import fetch_saved_stories, delete_story_from_db
-
 from auth import build_login_view, build_signup_view
 from Screen.dashboard import build_dashboard_view
 from Screen.song_generator import build_song_generate_view
@@ -22,8 +20,6 @@ def main(page: ft.Page):
     page.title = "Poet AI Studio"
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 0
-    page.window_width = 1250
-    page.window_height = 800
 
     workspace_content_area = ft.Column(expand=True, scroll=ft.ScrollMode.AUTO)
     sidebar_layout = build_sidebar(lambda v: switch_workspace_view(v), "Dashboard")
@@ -85,16 +81,17 @@ def main(page: ft.Page):
                 ),
             ],
             expand=True,
-            spacing=0,
         )
     )
 
 
 if __name__ == "__main__":
-    port_number = int(os.getenv("PORT", "8502"))
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "8000"))
+
     ft.run(
         main,
         view=ft.AppView.WEB_BROWSER,
-        host="0.0.0.0",
-        port=port_number,
+        host=host,
+        port=port,
     )

@@ -1,7 +1,6 @@
 import os
 import flet as ft
-from google import genai
-
+import google.genai as genai
 from Screen.story_generator import story_parameters
 from database import save_story_to_db, delete_story_from_db
 from session_store import SESSION
