@@ -29,5 +29,7 @@
         "env.bak{,/**}",
         "venv.bak{,/**}",
         ".vscode{,/**}"
-    ]
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/f6af6976-be0f-40dc-b1c8-eb834bc96465/resourceGroups/appsvc_linux_canadaeast_basic/providers/Microsoft.Web/sites/poet-ai-studio",
+    "appService.deploySubpath": "."
 }
