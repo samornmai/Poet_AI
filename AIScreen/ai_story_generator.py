@@ -1,11 +1,14 @@
 import os
 import flet as ft
 import google.genai as genai
+import time
 from Screen.story_generator import story_parameters
 from database import save_story_to_db, delete_story_from_db
 from session_store import SESSION
 
 RAW_TYPE = "story"
+MAX_RETRIES = 3
+RETRY_DELAY = 2
 
 
 def build_story_ai_results_view(nav_callback):
@@ -22,17 +25,28 @@ def build_story_ai_results_view(nav_callback):
         if session["client"] and session["chat"]:
             return True
         if not api_key:
+            print("❌ Missing API Key")
             return False
-        try:
-            session["client"] = genai.Client(api_key=api_key)
-            session["chat"] = session["client"].chats.create(
-                model="gemini-2.5-flash",
-                config={"system_instruction": f"Archetype: {archetype_state['value']}"},
-            )
-            return True
-        except Exception as e:
-            print("Session Error:", e)
-            return False
+        
+        for attempt in range(MAX_RETRIES):
+            try:
+                session["client"] = genai.Client(api_key=api_key)
+                session["chat"] = session["client"].chats.create(
+                    model="gemini-2.5-flash",
+                    config={"system_instruction": f"Archetype: {archetype_state['value']}"},
+                )
+                print("✅ Story Generator session created")
+                return True
+            except Exception as e:
+                error_msg = str(e)
+                if "503" in error_msg or "UNAVAILABLE" in error_msg:
+                    print(f"⚠️  Server busy (503). Retry {attempt + 1}/{MAX_RETRIES}")
+                    if attempt < MAX_RETRIES - 1:
+                        time.sleep(RETRY_DELAY * (2 ** attempt))
+                        continue
+                else:
+                    print(f"Session Error: {e}")
+                return False
 
     def ai(text):
         is_saved = {"status": False, "id": None}

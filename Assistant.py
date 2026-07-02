@@ -1,10 +1,13 @@
 import flet as ft
 import google.genai as genai
 import os
+import time
 from database import save_story_to_db
 
 
 CURRENT_USER = 1
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # seconds
 
 
 # ---------------- GLOBAL STATE ----------------
@@ -19,7 +22,7 @@ chat_history_controls = ft.ListView(
 session = {"client": None, "chat": None}
 
 
-# ---------------- GEMINI SESSION ----------------
+# ---------------- GEMINI SESSION (WITH RETRY LOGIC) ----------------
 def get_session():
     if session["client"] and session["chat"]:
         return True
@@ -29,25 +32,49 @@ def get_session():
         print("❌ Missing GEMINI_API_KEY in .env file")
         return False
 
-    try:
-        # Initialize Gemini API with direct client creation (consistent with other modules)
-        session["client"] = genai.Client(api_key=api_key)
+    for attempt in range(MAX_RETRIES):
+        try:
+            # Initialize Gemini API
+            session["client"] = genai.Client(api_key=api_key)
 
-        session["chat"] = session["client"].chats.create(
-            model="gemini-2.5-flash",
-            config={
-                "system_instruction": "You are a helpful AI assistant for creative writing. Help users with songwriting, storytelling, and creative ideas."
-            },
-        )
+            session["chat"] = session["client"].chats.create(
+                model="gemini-2.5-flash",
+                config={
+                    "system_instruction": "You are a helpful AI assistant for creative writing. Help users with songwriting, storytelling, and creative ideas."
+                },
+            )
 
-        print("✅ Gemini API session initialized successfully")
-        return True
+            print("✅ Gemini API session initialized successfully")
+            return True
 
-    except Exception as e:
-        print(f"❌ Session error: {str(e)}")
-        print(f"API Key loaded: {bool(api_key)}")
-        print(f"API Key format: {api_key[:20] if api_key else 'None'}...")
-        return False
+        except Exception as e:
+            error_msg = str(e)
+            
+            # Check for 503 Service Unavailable error
+            if "503" in error_msg or "UNAVAILABLE" in error_msg:
+                print(f"⚠️  API Server Overloaded (503). Retry {attempt + 1}/{MAX_RETRIES}")
+                if attempt < MAX_RETRIES - 1:
+                    wait_time = RETRY_DELAY * (2 ** attempt)  # Exponential backoff
+                    print(f"⏳ Waiting {wait_time} seconds before retry...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    print("❌ Max retries reached. Please try again in a few minutes.")
+                    return False
+            
+            # Check for invalid API key (401)
+            elif "401" in error_msg or "UNAUTHENTICATED" in error_msg:
+                print("❌ Authentication Failed (401)")
+                print("   - Your API key format is invalid")
+                print("   - API keys should start with 'AIza_' not 'AQ.'")
+                print("   - Get a valid key from: https://aistudio.google.com/app/apikey")
+                return False
+            
+            else:
+                print(f"❌ Session error: {error_msg}")
+                return False
+
+    return False
 
 
 

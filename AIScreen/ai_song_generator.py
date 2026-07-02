@@ -1,9 +1,13 @@
 import os
 import flet as ft
 import google.genai as genai
+import time
 from Screen.song_generator import song_parameters
 from database import save_story_to_db, delete_story_from_db
 from session_store import SESSION
+
+MAX_RETRIES = 3
+RETRY_DELAY = 2
 
 
 def build_song_ai_results_view(nav_callback):
@@ -23,23 +27,33 @@ def build_song_ai_results_view(nav_callback):
             return True
 
         if not api_key:
+            print("❌ Missing API Key")
             return False
 
-        try:
-            session_holder["client"] = genai.Client(api_key=api_key)
-            system_instruction = (
-                f"You are AI Poet. Write songs in {song_parameters.get('genre', 'Pop Rock Track')} style "
-                f"about {song_parameters.get('theme', 'hope and connection')} with "
-                f"{song_parameters.get('nuance', 'warm and uplifting')} emotion."
-            )
-            session_holder["chat"] = session_holder["client"].chats.create(
-                model="gemini-2.5-flash",
-                config={"system_instruction": system_instruction},
-            )
-            return True
-        except Exception as e:
-            print("Session error:", e)
-            return False
+        for attempt in range(MAX_RETRIES):
+            try:
+                session_holder["client"] = genai.Client(api_key=api_key)
+                system_instruction = (
+                    f"You are AI Poet. Write songs in {song_parameters.get('genre', 'Pop Rock Track')} style "
+                    f"about {song_parameters.get('theme', 'hope and connection')} with "
+                    f"{song_parameters.get('nuance', 'warm and uplifting')} emotion."
+                )
+                session_holder["chat"] = session_holder["client"].chats.create(
+                    model="gemini-2.5-flash",
+                    config={"system_instruction": system_instruction},
+                )
+                print("✅ Song Generator session created")
+                return True
+            except Exception as e:
+                error_msg = str(e)
+                if "503" in error_msg or "UNAVAILABLE" in error_msg:
+                    print(f"⚠️  Server busy (503). Retry {attempt + 1}/{MAX_RETRIES}")
+                    if attempt < MAX_RETRIES - 1:
+                        time.sleep(RETRY_DELAY * (2 ** attempt))
+                        continue
+                else:
+                    print(f"Session error: {e}")
+                return False
 
     def ai_bubble(text):
         state = {"saved": False, "id": None}
