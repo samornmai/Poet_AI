@@ -8,7 +8,6 @@ Poet AI Studio is an AI-powered creative workspace built with Python and Flet. I
 - Create stories and story ideas with a guided AI workflow
 - Use a chat-style assistant for creative help
 - Save generated content for future review
-- Enjoy a responsive design for both web and mobile screens
 
 ## Installation and Setup Instructions
 1. Clone the repository:
